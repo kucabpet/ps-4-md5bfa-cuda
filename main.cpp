@@ -185,7 +185,7 @@ void parse_input_data(char *input, uint8_t *output) {
 
 }
 
-void clean_up(char **array, const int dim) {
+void clean_up(char *array, const int width, const int height) {
 
     for (int i = 0; i < dim; i++) {
         delete[] array[i];
@@ -264,11 +264,11 @@ void guess(char *prefix, int level, uint8_t *input, int max_depth,
 
 
 // Declaration
-void run_mult(char **words, int dim, int len);
+void run_mult(char *words, int height, int width);
 
 
 int main(int argc, char **argv) {
-/*
+
     if (argc < 3) {
         printf("usage: %s <hash>, <count of letter>\n", argv[0]);
         return 1;
@@ -294,14 +294,8 @@ int main(int argc, char **argv) {
     char alphabet[ALPHABET_COUNT];
     generate_alphabet(alphabet);
 
-//    const int dimension = pow(ALPHABET_COUNT, len);
     const int height = pow(ALPHABET_COUNT, len);
     const int width = len;
-
-//    char **words = new char *[dimension];
-//    for (int i = 0; i < dimension; i++) {
-//        words[i] = new char[len];
-//    }
 
     char *words = new char[width * height];
 
@@ -309,8 +303,6 @@ int main(int argc, char **argv) {
     int *words_index = &words_index_value;
 
     generate_words("", 0, len, alphabet, words, words_index, height, width);
-
-//    run_mult(words, dimension, len);
 
     int x = 0;
     printf("\n resutl:  \n");
@@ -322,8 +314,10 @@ int main(int argc, char **argv) {
         printf("[%d]: %s \n", x++, w);
     }
 
-//    clean_up(words, dimension);
-*/
+    run_mult(words, height, width);
+
+    clean_up(words, height * width);
+
     printf("\n\n Program exit \n");
     return 0;
 }

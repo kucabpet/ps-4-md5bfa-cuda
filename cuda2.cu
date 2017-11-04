@@ -33,39 +33,52 @@ __global__ void thread_hierarchy()
 	// Block position in grid -		blockIdx
 	// Block dimension -			blockDim
 	// Thread position in block -	threadIdx
-    printf( "Block{%d,%d}[%d,%d] Thread{%d,%d}[%d,%d]\n",
+    printf( "Block{%d,%d}[%d,%d] Thread{%d,%d}[%d,%d] - something: %d \n",
 	    gridDim.x, gridDim.y, blockIdx.x, blockIdx.y,
-		blockDim.x, blockDim.y, threadIdx.x, threadIdx.y );
+		blockDim.x, blockDim.y, threadIdx.x, threadIdx.y,
+		blockDim.x * blockIdx.x + threadIdx.x);
 }
 
-void run_mult(char **words, int dim, int len)
+void run_mult(char *words, int height, int width)
 {
+/*
+	cudaError_t cerr;
+	thread_hierarchy<<< dim3( 2, 2 ), dim3( 3, 3 )>>>();
+	
+	if ( ( cerr = cudaGetLastError() ) != cudaSuccess )
+			printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+
+	cudaDeviceSynchronize();
+*/	
+
 	cudaError_t cerr;
 	int threads = 128;
 	int blocks = ( Length + threads - 1 ) / threads;
 
 	// Memory allocation in GPU device
-	char **cudaP;
-	cerr = cudaMalloc( &cudaP, Length * sizeof( float ) );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+	char *cWords;
+	cerr = cudaMalloc( &cWords, height * width * sizeof( char ) );
+//	if ( cerr != cudaSuccess )
+//		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Copy data from PC to GPU device
-	cerr = cudaMemcpy( cudaP, P, Length * sizeof( float ), cudaMemcpyHostToDevice );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+//	cerr = cudaMemcpy( cudaP, P, Length * sizeof( float ), cudaMemcpyHostToDevice );
+//	if ( cerr != cudaSuccess )
+//		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Grid creation
-	kernel_mult<<< blocks, threads >>>( cudaP, Length, Mult );
+//	kernel_mult<<< blocks, threads >>>( cudaP, Length, Mult );
+	thread_hirearchy<<< blocks, threads >>>( );
 
 	if ( ( cerr = cudaGetLastError() ) != cudaSuccess )
 		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Copy data from GPU device to PC
-	cerr = cudaMemcpy( P, cudaP, Length * sizeof( float ), cudaMemcpyDeviceToHost );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+//	cerr = cudaMemcpy( P, cudaP, Length * sizeof( float ), cudaMemcpyDeviceToHost );
+//	if ( cerr != cudaSuccess )
+//		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Free memory
-	cudaFree( cudaP );
+//	cudaFree( cudaP );
+
 }
