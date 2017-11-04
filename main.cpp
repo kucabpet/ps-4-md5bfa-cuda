@@ -189,7 +189,7 @@ void parse_input_data(char *input, uint8_t *output) {
 
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
-    char tmp[max_depth];
+    char tmp[width];
 
     level += 1;
 
@@ -198,23 +198,16 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
         strcat(tmp, prefix);
         strncat(tmp, &alphabet[i], 1);
 
-//        hash_md5(tmp, current_hash);
-
         if (SHOW_GENERATING) {
             printf("Generating... %s... \n", tmp);
         }
 
-        for (int j = 0; j < max_depth; j++) {
+        for (int j = 0; j < width; j++) {
             words[width * (*curr_index) + j] = tmp[j];
         }
 
         (*curr_index)++;
 
-
-//        int curr_index_value = *curr_index;
-//        strcpy(words[width * curr_index_value], tmp);
-
-//        strcpy(words[(*(curr_index))++], tmp);
 
         if (level < max_depth) {
             generate_words(tmp, level, max_depth, alphabet, words, curr_index, height, width);
@@ -222,41 +215,6 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
     }
 
 }
-
-// remove
-void guess(char *prefix, int level, uint8_t *input, int max_depth,
-           char *alphabet, int *found) {
-
-    if (found) {
-        return;
-    }
-
-    uint8_t current_hash[16];
-    char tmp[max_depth];
-
-    level += 1;
-
-    for (int i = 0; i < 26; i++) {
-        strcpy(tmp, "");
-        strcat(tmp, prefix);
-        strncat(tmp, &alphabet[i], 1);
-
-        hash_md5(tmp, current_hash);
-
-        printf("Trying %s... \n", tmp);
-
-        if (equals_array(input, current_hash)) {
-            printf("\nInput string found: %s\n", tmp);
-            *found = 1;
-        }
-
-        if (level < max_depth) {
-            guess(tmp, level, input, max_depth, alphabet, found);
-        }
-    }
-
-}
-
 
 // Declaration
 void run_mult(char *words, int height, int width);
@@ -300,7 +258,7 @@ int main(int argc, char **argv) {
     int words_index_value = 0;
     int *words_index = &words_index_value;
 
-    generate_words("", 0, len, alphabet, words, words_index, height, width);
+    generate_words((char*)"", 0, len, alphabet, words, words_index, height, width);
 
     if(SHOW_WORDS_ARRAY) {
         int x = 0;
@@ -319,7 +277,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    run_mult(words, height, width);
+//    run_mult(words, height, width);
 
     words = NULL;
     delete words;
