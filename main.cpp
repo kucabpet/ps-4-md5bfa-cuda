@@ -10,6 +10,8 @@
 #include <cmath>
 
 #define ALPHABET_COUNT 26
+#define SHOW_GENERATING false
+#define SHOW_WORDS_ARRAY true
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const uint32_t k[64] = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -185,15 +187,6 @@ void parse_input_data(char *input, uint8_t *output) {
 
 }
 
-void clean_up(char *array, const int width, const int height) {
-
-    for (int i = 0; i < dim; i++) {
-        delete[] array[i];
-    }
-    delete[] array;
-}
-
-
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
     char tmp[max_depth];
@@ -207,7 +200,9 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
 
 //        hash_md5(tmp, current_hash);
 
-        printf("Generating... %s... \n", tmp);
+        if (SHOW_GENERATING) {
+            printf("Generating... %s... \n", tmp);
+        }
 
         for (int j = 0; j < max_depth; j++) {
             words[width * (*curr_index) + j] = tmp[j];
@@ -297,6 +292,9 @@ int main(int argc, char **argv) {
     const int height = pow(ALPHABET_COUNT, len);
     const int width = len;
 
+    printf("debug: height=%d \n", height);
+    printf("debug: width=%d \n", width);
+
     char *words = new char[width * height];
 
     int words_index_value = 0;
@@ -304,19 +302,27 @@ int main(int argc, char **argv) {
 
     generate_words("", 0, len, alphabet, words, words_index, height, width);
 
-    int x = 0;
-    printf("\n resutl:  \n");
-    for (int i = 0; i < height*width; i+=2) {
-        char w[3];
-        w[0] = words[i];
-        w[1] = words[i+1];
-        w[2] = '\0';
-        printf("[%d]: %s \n", x++, w);
+    if(SHOW_WORDS_ARRAY) {
+        int x = 0;
+        printf("\n Resutl: \n");
+
+        for (int i = 0; i < height*width; i+=width) {
+            char w[width];
+
+            int j;
+            for(j=0; j<width; j++) {
+                w[j] = words[i + j];
+            }
+            w[j] = '\0';
+
+            printf("[%d]: %s \n", x++, w);
+        }
     }
 
     run_mult(words, height, width);
 
-    clean_up(words, height * width);
+    words = NULL;
+    delete words;
 
     printf("\n\n Program exit \n");
     return 0;
