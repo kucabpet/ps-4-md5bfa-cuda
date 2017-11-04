@@ -194,8 +194,8 @@ void clean_up(char **array, const int dim) {
 }
 
 
-void generate_words(char *prefix, int level, int max_depth, char *alphabet,
-                    char **words, int *curr_index, int dimension) {
+void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
+                    char *words, int *curr_index, const int height, const int width) {
     char tmp[max_depth];
 
     level += 1;
@@ -209,15 +209,20 @@ void generate_words(char *prefix, int level, int max_depth, char *alphabet,
 
         printf("Generating... %s... \n", tmp);
 
-        if(*curr_index < dimension) {
-            strcpy(words[(*(curr_index))++], tmp);
-        } else {
-            printf("error: current index is higher then dimension");
+        for (int j = 0; j < max_depth; j++) {
+            words[width * (*curr_index) + j] = tmp[j];
         }
 
+        (*curr_index)++;
+
+
+//        int curr_index_value = *curr_index;
+//        strcpy(words[width * curr_index_value], tmp);
+
+//        strcpy(words[(*(curr_index))++], tmp);
 
         if (level < max_depth) {
-            generate_words(tmp, level, max_depth, alphabet, words, curr_index, dimension);
+            generate_words(tmp, level, max_depth, alphabet, words, curr_index, height, width);
         }
     }
 
@@ -258,8 +263,12 @@ void guess(char *prefix, int level, uint8_t *input, int max_depth,
 }
 
 
-int main(int argc, char **argv) {
+// Declaration
+void run_mult(char **words, int dim, int len);
 
+
+int main(int argc, char **argv) {
+/*
     if (argc < 3) {
         printf("usage: %s <hash>, <count of letter>\n", argv[0]);
         return 1;
@@ -285,27 +294,36 @@ int main(int argc, char **argv) {
     char alphabet[ALPHABET_COUNT];
     generate_alphabet(alphabet);
 
-    const int dimension = pow(ALPHABET_COUNT, len);
+//    const int dimension = pow(ALPHABET_COUNT, len);
+    const int height = pow(ALPHABET_COUNT, len);
+    const int width = len;
 
-    char **words = new char *[dimension];
-    for (int i = 0; i < dimension; i++) {
-        words[i] = new char[len];
-    }
+//    char **words = new char *[dimension];
+//    for (int i = 0; i < dimension; i++) {
+//        words[i] = new char[len];
+//    }
 
-//    int *found = 0;
-//	guess("", 0, input_data_hexa, len, alphabet, found);
-    int words_index_value=0;
+    char *words = new char[width * height];
+
+    int words_index_value = 0;
     int *words_index = &words_index_value;
 
-    generate_words("", 0, len, alphabet, words, words_index, dimension);
+    generate_words("", 0, len, alphabet, words, words_index, height, width);
 
+//    run_mult(words, dimension, len);
+
+    int x = 0;
     printf("\n resutl:  \n");
-    for(int i=0; i<dimension; i++) {
-        printf("[%d]: %s \n", i, words[i]);
+    for (int i = 0; i < height*width; i+=2) {
+        char w[3];
+        w[0] = words[i];
+        w[1] = words[i+1];
+        w[2] = '\0';
+        printf("[%d]: %s \n", x++, w);
     }
 
-    clean_up(words, dimension);
-
+//    clean_up(words, dimension);
+*/
     printf("\n\n Program exit \n");
     return 0;
 }
