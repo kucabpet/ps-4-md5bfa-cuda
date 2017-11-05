@@ -10,7 +10,7 @@
 #include <cmath>
 
 #define ALPHABET_COUNT 26
-#define SHOW_GENERATING false
+#define SHOW_GENERATING true
 #define SHOW_WORDS_ARRAY true
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
@@ -189,7 +189,7 @@ void parse_input_data(char *input, uint8_t *output) {
 
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
-    char tmp[width];
+    char *tmp = new char[width];
 
     level += 1;
 
@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
         }
     }
 
-//    run_mult(words, height, width);
+    run_mult(words, height, width);
 
     words = NULL;
     delete words;

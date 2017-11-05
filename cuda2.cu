@@ -15,6 +15,7 @@
 
 // Demo kernel for array elements multiplication.
 // Every thread selects one element and multiply it.
+/*
 __global__ void kernel_mult( float *pole, int L, float Mult )
 {
 	int l = blockDim.x * blockIdx.x + threadIdx.x;
@@ -23,6 +24,7 @@ __global__ void kernel_mult( float *pole, int L, float Mult )
 
 	pole[ l ] *= Mult;
 }
+*/
 
 // Demo kernel will display all global variables of grid organization.
 // Warning! Function printf is available from compute capability 2.x
@@ -41,7 +43,7 @@ __global__ void thread_hierarchy()
 
 void run_mult(char *words, int height, int width)
 {
-/*
+
 	cudaError_t cerr;
 	thread_hierarchy<<< dim3( 2, 2 ), dim3( 3, 3 )>>>();
 	
@@ -49,15 +51,16 @@ void run_mult(char *words, int height, int width)
 			printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	cudaDeviceSynchronize();
-*/	
+	
 
+/*
 	cudaError_t cerr;
 	int threads = 128;
-	int blocks = ( Length + threads - 1 ) / threads;
+	int blocks = ( height * width + threads - 1 ) / threads;
 
 	// Memory allocation in GPU device
-	char *cWords;
-	cerr = cudaMalloc( &cWords, height * width * sizeof( char ) );
+//	char *cWords;
+//	cerr = cudaMalloc( &cWords, height * width * sizeof( char ) );
 //	if ( cerr != cudaSuccess )
 //		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
@@ -68,7 +71,7 @@ void run_mult(char *words, int height, int width)
 
 	// Grid creation
 //	kernel_mult<<< blocks, threads >>>( cudaP, Length, Mult );
-	thread_hirearchy<<< blocks, threads >>>( );
+	thread_hirearchy<<< blocks, threads >>>();
 
 	if ( ( cerr = cudaGetLastError() ) != cudaSuccess )
 		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
@@ -80,5 +83,5 @@ void run_mult(char *words, int height, int width)
 
 	// Free memory
 //	cudaFree( cudaP );
-
+*/
 }
