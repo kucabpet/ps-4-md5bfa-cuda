@@ -118,8 +118,13 @@ int main(int argc, char **argv) {
     char alphabet[ALPHABET_COUNT];
     generate_alphabet(alphabet);
 
-    const int height = pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
-    const int width = len;
+    int height;
+    if (len == 1) {
+        height = ALPHABET_COUNT;
+    } else {
+        height = pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
+    }
+    int width = len;
 
     printf("debug: height=%d \n", height);
     printf("debug: width=%d \n", width);
