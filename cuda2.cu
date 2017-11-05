@@ -21,6 +21,11 @@
 void hash_md5(char *input, uint8_t *result);
 void show_hash(uint8_t *input);
 
+
+__host__ __device__ void hovno(){
+	printf("hovno \n");
+}
+
 // Demo kernel for array elements multiplication.
 // Every thread selects one element and multiply it.
 
@@ -39,11 +44,12 @@ __global__ void kernel_mult( char *words, const int height, const int width)
 	}
 	word[width] = '\0';
 
-
+/*
 	uint8_t current_hash[COUNT_UNIT8_T_HASH];
 	hash_md5(word, current_hash);
-
+*/
 	printf("debug: index=%d, word=%s \n", l, word);
+	hovno();
 /*
 	printf("hash=");
 	show_hash(current_hash);

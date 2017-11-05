@@ -152,14 +152,14 @@ void generate_alphabet(char *input) {
     input[i] = '\0';
 }
 
-__host__ __device__ void hash_md5(char *input, uint8_t *result) {
+void hash_md5(char *input, uint8_t *result) {
     // benchmark
     for (int i = 0; i < 1000000; i++) {
         md5((uint8_t *) input, (size_t) strlen(input), result);
     }
 }
 
-__host__ __device__ void show_hash(uint8_t *input) {
+void show_hash(uint8_t *input) {
     // display result
     for (int i = 0; i < 16; i++)
         printf("%2.2x", input[i]);
