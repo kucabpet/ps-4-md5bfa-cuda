@@ -210,7 +210,7 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
 
 		
 	if (*curr_index < height*width) {
-        	(*curr_index)+=width;
+        	(*curr_index)++;
 	}
 	
 
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
     char alphabet[ALPHABET_COUNT];
     generate_alphabet(alphabet);
 
-    const int height = pow(ALPHABET_COUNT, len);
+    const int height = pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
     const int width = len;
 
     printf("debug: height=%d \n", height);
