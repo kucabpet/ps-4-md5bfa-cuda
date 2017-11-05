@@ -11,7 +11,7 @@
 
 #define ALPHABET_COUNT 26
 #define SHOW_GENERATING true
-#define SHOW_WORDS_ARRAY true
+#define SHOW_WORDS_ARRAY false
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const uint32_t k[64] = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -146,6 +146,8 @@ void generate_alphabet(char *input) {
     for (char c = 'a'; c <= 'z'; c++) {
         input[i++] = c;
     }
+
+    input[i] = '\0';
 }
 
 void hash_md5(char *input, uint8_t *result) {
@@ -189,13 +191,13 @@ void parse_input_data(char *input, uint8_t *output) {
 
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
-    char *tmp = new char[width];
+    char tmp[width];
 
     level += 1;
 
     for (int i = 0; i < ALPHABET_COUNT; i++) {
         strcpy(tmp, "");
-        strcat(tmp, prefix);
+        strcpy(tmp, prefix);
         strncat(tmp, &alphabet[i], 1);
 
         if (SHOW_GENERATING) {
@@ -213,7 +215,6 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
             generate_words(tmp, level, max_depth, alphabet, words, curr_index, height, width);
         }
     }
-
 }
 
 // Declaration
@@ -258,17 +259,17 @@ int main(int argc, char **argv) {
     int words_index_value = 0;
     int *words_index = &words_index_value;
 
-    generate_words((char*)"", 0, len, alphabet, words, words_index, height, width);
+    generate_words((char *) "", 0, len, alphabet, words, words_index, height, width);
 
-    if(SHOW_WORDS_ARRAY) {
+    if (SHOW_WORDS_ARRAY) {
         int x = 0;
         printf("\n Resutl: \n");
 
-        for (int i = 0; i < height*width; i+=width) {
+        for (int i = 0; i < height * width; i += width) {
             char w[width];
 
             int j;
-            for(j=0; j<width; j++) {
+            for (j = 0; j < width; j++) {
                 w[j] = words[i + j];
             }
             w[j] = '\0';
@@ -277,7 +278,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    run_mult(words, height, width);
+//    run_mult(words, height, width);
 
     words = NULL;
     delete words;
