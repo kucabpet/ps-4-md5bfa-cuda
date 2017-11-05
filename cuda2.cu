@@ -44,6 +44,7 @@ __global__ void thread_hierarchy()
 void run_mult(char *words, int height, int width)
 {
 
+	printf("xxxxxxxxxxxxxxxxxx");
 	cudaError_t cerr;
 	thread_hierarchy<<< dim3( 2, 2 ), dim3( 3, 3 )>>>();
 	

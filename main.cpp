@@ -10,7 +10,7 @@
 #include <cmath>
 
 #define ALPHABET_COUNT 26
-#define SHOW_GENERATING true
+#define SHOW_GENERATING false
 #define SHOW_WORDS_ARRAY false
 
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
@@ -205,11 +205,14 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
         }
 
         for (int j = 0; j < width; j++) {
-            words[width * (*curr_index) + j] = tmp[j];
+	    words[width * (*curr_index) + j] = tmp[j];
         }
 
-        (*curr_index)++;
-
+		
+	if (*curr_index < height*width) {
+        	(*curr_index)+=width;
+	}
+	
 
         if (level < max_depth) {
             generate_words(tmp, level, max_depth, alphabet, words, curr_index, height, width);
@@ -278,7 +281,7 @@ int main(int argc, char **argv) {
         }
     }
 
-//    run_mult(words, height, width);
+    run_mult(words, height, width);
 
     words = NULL;
     delete words;
