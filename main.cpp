@@ -8,6 +8,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <cmath>
+#include <cuda_runtime.h>
+
 
 #define ALPHABET_COUNT 26
 #define SHOW_GENERATING false
@@ -150,14 +152,14 @@ void generate_alphabet(char *input) {
     input[i] = '\0';
 }
 
-void hash_md5(char *input, uint8_t *result) {
+__host__ __device__ void hash_md5(char *input, uint8_t *result) {
     // benchmark
     for (int i = 0; i < 1000000; i++) {
         md5((uint8_t *) input, (size_t) strlen(input), result);
     }
 }
 
-void show_hash(uint8_t *input) {
+__host__ __device__ void show_hash(uint8_t *input) {
     // display result
     for (int i = 0; i < 16; i++)
         printf("%2.2x", input[i]);
