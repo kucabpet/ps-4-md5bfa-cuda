@@ -158,9 +158,9 @@ __host__ __device__ int my_strlen(char *text) {
 
 __host__ __device__ void hash_md5(char *input, uint8_t *result) {
     // benchmark
-    for (int i = 0; i < 1000000; i++) {
+    //for (int i = 0; i < 1000000; i++) {
         md5((uint8_t *) input, (size_t) my_strlen(input), result);
-    }
+    //}
 }
 
 
@@ -185,8 +185,9 @@ __global__ void kernel_mult( char *words, const int height, const int width)
 	uint8_t current_hash[COUNT_UNIT8_T_HASH];
 	hash_md5(word, current_hash);
 
-	printf("debug: index=%d, word=%s, hashing... \n", l, word);
-
+	printf("debug: index=%d, word=%s, hash=%2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
+		 l, word,current_hash[0], current_hash[1],current_hash[2],current_hash[3],current_hash[4],current_hash[5],current_hash[6],current_hash[7],
+		current_hash[8],current_hash[9],current_hash[10],current_hash[11],current_hash[12],current_hash[13],current_hash[14],current_hash[15]);
 }
 
 
