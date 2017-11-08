@@ -1,15 +1,3 @@
-// ***********************************************************************
-//
-// Demo program for education in subject
-// Computer Architectures and Paralel Systems
-// Petr Olivka, dep. of Computer Science, FEI, VSB-TU Ostrava
-// email:petr.olivka@vsb.cz
-//
-// Example of CUDA Technology Usage
-// Multiplication of elements in float array
-//
-// ***********************************************************************
-
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -18,23 +6,30 @@
 #include <cmath>
 
 #define COUNT_UNIT8_T_HASH 16
-//#define DEBUG 
+
+#define MD5_CHUNKS_BYTE 512/8
+#define MD5_TEXT_LEN 448/8
+
+//#define DEBUG
 
 #define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
-__host__ __device__ void to_bytes(uint32_t val, uint8_t *bytes) {
+__host__ __device__
+void to_bytes(uint32_t val, uint8_t *bytes) {
     bytes[0] = (uint8_t) val;
     bytes[1] = (uint8_t) (val >> 8);
     bytes[2] = (uint8_t) (val >> 16);
     bytes[3] = (uint8_t) (val >> 24);
 }
 
-__host__ __device__ uint32_t to_int32(const uint8_t *bytes) {
+__host__ __device__
+uint32_t to_int32(const uint8_t *bytes) {
     return (uint32_t) bytes[0] | ((uint32_t) bytes[1] << 8)
            | ((uint32_t) bytes[2] << 16) | ((uint32_t) bytes[3] << 24);
 }
 
-__host__ __device__ void md5(const uint8_t *initial_msg, size_t initial_len, uint8_t *digest) {
+__host__ __device__
+void md5(const uint8_t *initial_msg, size_t initial_len, uint8_t *digest) {
 
     // Constants are the integer part of the sines of integers (in radians) * 2^32.
     const uint32_t k[64] = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
@@ -76,25 +71,27 @@ __host__ __device__ void md5(const uint8_t *initial_msg, size_t initial_len, uin
     //append "0" bits until message length in bits ≡ 448 (mod 512)
     //append length mod (2^64) to message
 
-    for (new_len = initial_len + 1; new_len % (512 / 8) != 448 / 8; new_len++);
+    for (new_len = initial_len + 1; new_len % (MD5_CHUNKS_BYTE) != MD5_TEXT_LEN; new_len++);
 
     msg = (uint8_t *) malloc(new_len + 8);
     memcpy(msg, initial_msg, initial_len);
     msg[initial_len] = 0x80; // append the "1" bit; most significant bit is "first"
+
     for (offset = initial_len + 1; offset < new_len; offset++)
         msg[offset] = 0; // append "0" bits
 
     // append the len in bits at the end of the buffer.
     to_bytes(initial_len * 8, msg + new_len);
+
     // initial_len>>29 == initial_len*8>>32, but avoids overflow.
     to_bytes(initial_len >> 29, msg + new_len + 4);
 
     // Process the message in successive 512-bit chunks:
     //for each 512-bit chunk of message:
-    for (offset = 0; offset < new_len; offset += (512 / 8)) {
+    for (offset = 0; offset < new_len; offset += (MD5_CHUNKS_BYTE)) {
 
         // break chunk into sixteen 32-bit words w[j], 0 ≤ j ≤ 15
-        for (i = 0; i < 16; i++)
+        for (i = 0; i < COUNT_UNIT8_T_HASH; i++)
             w[i] = to_int32(msg + offset + i * 4);
 
         // Initialize hash value for this chunk:
@@ -146,7 +143,8 @@ __host__ __device__ void md5(const uint8_t *initial_msg, size_t initial_len, uin
     to_bytes(h3, digest + 12);
 }
 
-__host__ __device__ int my_strlen(char *text) {
+__host__ __device__
+int my_strlen(char *text) {
     int len = 0;
     int i = 0;
     while (text[i++] != '\0') {
@@ -155,85 +153,69 @@ __host__ __device__ int my_strlen(char *text) {
     return len;
 }
 
-__host__ __device__ void hash_md5(char *input, uint8_t *result) {
-    // benchmark
-    //for (int i = 0; i < 1000000; i++) {
-        md5((uint8_t *) input, (size_t) my_strlen(input), result);
-    //}
+__host__ __device__
+void hash_md5(char *input, uint8_t *result) {
+    md5((uint8_t *) input, (size_t) my_strlen(input), result);
 }
 
 
-// Demo kernel for array elements multiplication.
-// Every thread selects one element and multiply it.
+__global__ void kernel_mult(char *words, const int height, const int width, uint8_t *cHashWords) {
 
-__global__ void kernel_mult( char *words, const int height, const int width, uint8_t *cHashWords)
-{
-	int l = blockDim.x * blockIdx.x + threadIdx.x;
-	
-	if ( l >= height) {
-		return;
-	}
+    int l = blockDim.x * blockIdx.x + threadIdx.x;
 
-	char *word = new char[width+1];
+    if (l >= height) {
+        return;
+    }
 
-	int j;
-	for(j=0; j < width; j++) {
-		word[j] = words[width * l + j];
-	}
-	word[j] = '\0';
+    char *word = new char[width + 1];
 
-//	uint8_t current_hash[COUNT_UNIT8_T_HASH];
-//	hash_md5(word, current_hash);
-	hash_md5(word, &cHashWords[COUNT_UNIT8_T_HASH * l]);
+    int j;
+    for (j = 0; j < width; j++) {
+        word[j] = words[width * l + j];
+    }
+    word[j] = '\0';
 
-//	cHashWords[COUNT_UNIT8_T_HASH * l] = current_hash;
-	
+    hash_md5(word, &cHashWords[COUNT_UNIT8_T_HASH * l]);
+
 #ifdef DEBUG
-//	printf("debug: hashing word: %s\n", word);
+    printf("debug: hashing word: %s\n", word);
 #endif
 
-	delete [] word; 
+    delete[] word;
 }
 
 
+void run_mult(char *words, const int height, const int width, uint8_t *hashed_words) {
 
-void run_mult(char *words, const int height, const int width, uint8_t *hashed_words)
-{
+    cudaError_t cerr;
+    int threads = 128;
+    int length = height * width;
+    int blocks = (length + threads - 1) / threads;
 
-	cudaError_t cerr;
-	int threads = 128;
-	int length = height * width;
-	int blocks = ( length + threads - 1 ) / threads;
+    char *cWords;
+    cerr = cudaMalloc(&cWords, length * sizeof(char));
+    if (cerr != cudaSuccess)
+        printf("CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString(cerr));
 
-	// Memory allocation in GPU device
-	char *cWords;
-	cerr = cudaMalloc( &cWords, length * sizeof( char ) );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
-
-	uint8_t *cHashWords;
-        cerr = cudaMalloc( &cHashWords, height * COUNT_UNIT8_T_HASH * sizeof( uint8_t ));
-        if ( cerr != cudaSuccess )
-                printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+    uint8_t *cHashWords;
+    cerr = cudaMalloc(&cHashWords, height * COUNT_UNIT8_T_HASH * sizeof(uint8_t));
+    if (cerr != cudaSuccess)
+        printf("CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString(cerr));
 
 
-	// Copy data from PC to GPU device
-	cerr = cudaMemcpy( cWords, words, length * sizeof( char ), cudaMemcpyHostToDevice );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+    cerr = cudaMemcpy(cWords, words, length * sizeof(char), cudaMemcpyHostToDevice);
+    if (cerr != cudaSuccess)
+        printf("CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString(cerr));
 
-	// Grid creation
-	kernel_mult<<< blocks, threads >>>( cWords, height, width, cHashWords);
+    kernel_mult<<< blocks, threads >>> (cWords, height, width, cHashWords);
 
-	if ( ( cerr = cudaGetLastError() ) != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+    if ((cerr = cudaGetLastError()) != cudaSuccess)
+        printf("CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString(cerr));
 
-	// Copy data from GPU device to PC
-	cerr = cudaMemcpy( hashed_words, cHashWords, height * COUNT_UNIT8_T_HASH * sizeof( uint8_t ), cudaMemcpyDeviceToHost );
-	if ( cerr != cudaSuccess )
-		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+    cerr = cudaMemcpy(hashed_words, cHashWords, height * COUNT_UNIT8_T_HASH * sizeof(uint8_t), cudaMemcpyDeviceToHost);
+    if (cerr != cudaSuccess)
+        printf("CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString(cerr));
 
-	// Free memory
-	cudaFree( cWords );
-	cudaFree( cHashWords );
+    cudaFree(cWords);
+    cudaFree(cHashWords);
 }

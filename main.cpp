@@ -1,19 +1,21 @@
-/*
- * Simple MD5 implementation
- *
- * Compile with: gcc -o md5 md5.c
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <cmath>
 
+#define COUNT_HASH 32
 #define COUNT_UNIT8_T_HASH 16
 #define ALPHABET_COUNT 26
-#define SHOW_GENERATING false
-#define SHOW_WORDS_ARRAY true
-#define SHOW_HASHES_WORDS true
+
+#define DEBUG
+#define DEBUG_SHOW_GENERATING_WORD false
+#define DEBUG_SHOW_WORDS_ARRAY true
+#define DEBUG_SHOW_WORDS_HASHES_ARRAY true
+
+// Declaration
+void run_mult(char *words, int height, int width, uint8_t *hashed_words);
+
 
 void generate_alphabet(char *input) {
     int i = 0;
@@ -26,15 +28,15 @@ void generate_alphabet(char *input) {
 }
 
 void show_hash(uint8_t *input) {
-    // display result
-    for (int i = 0; i < 16; i++)
+
+    for (int i = 0; i < COUNT_UNIT8_T_HASH; i++)
         printf("%2.2x", input[i]);
 
-    puts("\n");
+    printf("\n");
 }
 
 int equals_array(uint8_t *array_1, uint8_t *array_2) {
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < COUNT_UNIT8_T_HASH; i++) {
         if (array_1[i] != array_2[i]) {
             return 0;
         }
@@ -47,11 +49,11 @@ void parse_input_data(char *input, uint8_t *output) {
     char current[2];
     int j = 0;
 
-    for (int i = 0; i < 32; i += 2) {
+    for (int i = 0; i < COUNT_HASH; i += 2) {
         current[0] = input[i];
         current[1] = input[i + 1];
 
-        uint8_t value = (uint8_t) strtol(current, NULL, 16);
+        uint8_t value = (uint8_t) strtol(current, NULL, COUNT_UNIT8_T_HASH);
         output[j++] = value;
     }
 
@@ -59,38 +61,34 @@ void parse_input_data(char *input, uint8_t *output) {
 
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
-    char tmp[width];
+    char curr_word[width];
 
     level += 1;
 
     for (int i = 0; i < ALPHABET_COUNT; i++) {
-        strcpy(tmp, "");
-        strcpy(tmp, prefix);
-        strncat(tmp, &alphabet[i], 1);
+        strcpy(curr_word, "");
+        strcpy(curr_word, prefix);
+        strncat(curr_word, &alphabet[i], 1);
 
-        if (SHOW_GENERATING) {
-            printf("Generating... %s... \n", tmp);
+        if (DEBUG_SHOW_GENERATING_WORD) {
+            printf("Generating... %s... \n", curr_word);
         }
 
         for (int j = 0; j < width; j++) {
-	    words[width * (*curr_index) + j] = tmp[j];
+            words[width * (*curr_index) + j] = curr_word[j];
         }
 
-		
-	if (*curr_index < height*width) {
-        	(*curr_index)++;
-	}
-	
+
+        if (*curr_index < height * width) {
+            (*curr_index)++;
+        }
+
 
         if (level < max_depth) {
-            generate_words(tmp, level, max_depth, alphabet, words, curr_index, height, width);
+            generate_words(curr_word, level, max_depth, alphabet, words, curr_index, height, width);
         }
     }
 }
-
-// Declaration
-void run_mult(char *words, int height, int width, uint8_t *hashed_words);
-
 
 int main(int argc, char **argv) {
 
@@ -119,15 +117,17 @@ int main(int argc, char **argv) {
     generate_alphabet(alphabet);
 
     int height;
-    if (len == 1) {
-        height = ALPHABET_COUNT;
+    if (len > 1) {
+        height = (int) pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
     } else {
-        height = pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
+        height = ALPHABET_COUNT;
     }
     int width = len;
 
+#ifdef DEBUG
     printf("debug: height=%d \n", height);
     printf("debug: width=%d \n", width);
+#endif
 
     char *words = new char[width * height];
 
@@ -136,63 +136,64 @@ int main(int argc, char **argv) {
 
     generate_words((char *) "", 0, len, alphabet, words, words_index, height, width);
 
-    if (SHOW_WORDS_ARRAY) {
+    if (DEBUG_SHOW_WORDS_ARRAY) {
         int x = 0;
-        printf("\n Resutl: \n");
 
         for (int i = 0; i < height * width; i += width) {
-            char w[width];
+            char curr_word[width];
 
             int j;
             for (j = 0; j < width; j++) {
-                w[j] = words[i + j];
+                curr_word[j] = words[i + j];
             }
-            w[j] = '\0';
+            curr_word[j] = '\0';
 
-            printf("[%d]: %s \n", x++, w);
+            printf("[%d]: %s \n", x++, curr_word);
         }
     }
 
     uint8_t *hashed_words = new uint8_t[COUNT_UNIT8_T_HASH * height];
 
+    // CUDA
     run_mult(words, height, width, hashed_words);
 
-    if (SHOW_HASHES_WORDS) {
-	for (int i = 0, j=0; i < height * width && j < height; i += width, j++) {
-	     char w[width];
- 
-             int x;
-             for (x = 0; x < width; x++) {
-                 w[x] = words[i + x];
-             }
-             w[x] = '\0';
- 
-             printf("%s - ", w);
-             show_hash(&hashed_words[COUNT_UNIT8_T_HASH * j]);
-         }
+    if (DEBUG_SHOW_WORDS_HASHES_ARRAY) {
+        for (int i = 0, j = 0; i < height * width && j < height; i += width, j++) {
+            char curr_word[width];
+
+            int x;
+            for (x = 0; x < width; x++) {
+                curr_word[x] = words[i + x];
+            }
+            curr_word[x] = '\0';
+
+            printf("%s - ", curr_word);
+            show_hash(&hashed_words[COUNT_UNIT8_T_HASH * j]);
+        }
     }
 
-	for (int i = 0, j=0; i < height * width && j < height; i += width, j++) {
 
-	     if(equals_array(input_data_hexa, &hashed_words[COUNT_UNIT8_T_HASH * j])) {
+    for (int i = 0, j = 0; i < height * width && j < height; i += width, j++) {
 
-		printf("Found match! \n");
-	        char w[width];
- 
-             	int x;
-             	for (x = 0; x < width; x++) {
-                	w[x] = words[i + x];
-             	}
-             	w[x] = '\0';
- 
-             	printf("Input string: %s \n", w);
-         }
-	}
+        if (equals_array(input_data_hexa, &hashed_words[COUNT_UNIT8_T_HASH * j])) {
+
+            printf("Found match! \n");
+            char w[width];
+
+            int x;
+            for (x = 0; x < width; x++) {
+                w[x] = words[i + x];
+            }
+            w[x] = '\0';
+
+            printf("Input string: %s \n", w);
+        }
+    }
 
 
     words = NULL;
     delete words;
 
-    printf("\n\n Program exit \n");
+    printf("\n\nProgram exit\n");
     return 0;
 }
