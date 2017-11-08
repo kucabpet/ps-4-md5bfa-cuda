@@ -9,10 +9,11 @@
 #include <stdint.h>
 #include <cmath>
 
-
+#define COUNT_UNIT8_T_HASH 16
 #define ALPHABET_COUNT 26
 #define SHOW_GENERATING false
-#define SHOW_WORDS_ARRAY false
+#define SHOW_WORDS_ARRAY true
+#define SHOW_HASHES_WORDS true
 
 void generate_alphabet(char *input) {
     int i = 0;
@@ -88,7 +89,7 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
 }
 
 // Declaration
-void run_mult(char *words, int height, int width);
+void run_mult(char *words, int height, int width, uint8_t *hashed_words);
 
 
 int main(int argc, char **argv) {
@@ -106,11 +107,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    int len;
-    len = atoi(argv[2]);
+    int len = atoi(argv[2]);
 
     printf("Input hash: %s \n", input_data);
-    printf("Count of character: %d \n", len);
+    printf("Count of character: %d \n", argv[2]);
 
     uint8_t input_data_hexa[16];
     parse_input_data(input_data, input_data_hexa);
@@ -153,7 +153,42 @@ int main(int argc, char **argv) {
         }
     }
 
-    run_mult(words, height, width);
+    uint8_t *hashed_words = new uint8_t[COUNT_UNIT8_T_HASH * height];
+
+    run_mult(words, height, width, hashed_words);
+
+    if (SHOW_HASHES_WORDS) {
+	for (int i = 0, j=0; i < height * width && j < height; i += width, j++) {
+	     char w[width];
+ 
+             int x;
+             for (x = 0; x < width; x++) {
+                 w[x] = words[i + x];
+             }
+             w[x] = '\0';
+ 
+             printf("%s - ", w);
+             show_hash(&hashed_words[COUNT_UNIT8_T_HASH * j]);
+         }
+    }
+
+	for (int i = 0, j=0; i < height * width && j < height; i += width, j++) {
+
+	     if(equals_array(input_data_hexa, &hashed_words[COUNT_UNIT8_T_HASH * j])) {
+
+		printf("Found match! \n");
+	        char w[width];
+ 
+             	int x;
+             	for (x = 0; x < width; x++) {
+                	w[x] = words[i + x];
+             	}
+             	w[x] = '\0';
+ 
+             	printf("Input string: %s \n", w);
+         }
+	}
+
 
     words = NULL;
     delete words;

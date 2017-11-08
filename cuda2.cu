@@ -17,9 +17,8 @@
 #include <string.h>
 #include <cmath>
 
-#define COUNT_LETTER 2
 #define COUNT_UNIT8_T_HASH 16
-
+//#define DEBUG 
 
 #define LEFTROTATE(x, c) (((x) << (c)) | ((x) >> (32 - (c))))
 
@@ -167,7 +166,7 @@ __host__ __device__ void hash_md5(char *input, uint8_t *result) {
 // Demo kernel for array elements multiplication.
 // Every thread selects one element and multiply it.
 
-__global__ void kernel_mult( char *words, const int height, const int width)
+__global__ void kernel_mult( char *words, const int height, const int width, uint8_t *cHashWords)
 {
 	int l = blockDim.x * blockIdx.x + threadIdx.x;
 	
@@ -175,24 +174,30 @@ __global__ void kernel_mult( char *words, const int height, const int width)
 		return;
 	}
 
-	char word[COUNT_LETTER+1];
-	for(int j=0; j < width; j++) {
+	char *word = new char[width+1];
+
+	int j;
+	for(j=0; j < width; j++) {
 		word[j] = words[width * l + j];
 	}
-	word[width] = '\0';
+	word[j] = '\0';
 
+//	uint8_t current_hash[COUNT_UNIT8_T_HASH];
+//	hash_md5(word, current_hash);
+	hash_md5(word, &cHashWords[COUNT_UNIT8_T_HASH * l]);
 
-	uint8_t current_hash[COUNT_UNIT8_T_HASH];
-	hash_md5(word, current_hash);
+//	cHashWords[COUNT_UNIT8_T_HASH * l] = current_hash;
+	
+#ifdef DEBUG
+//	printf("debug: hashing word: %s\n", word);
+#endif
 
-	printf("debug: index=%d, word=%s, hash=%2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
-		 l, word,current_hash[0], current_hash[1],current_hash[2],current_hash[3],current_hash[4],current_hash[5],current_hash[6],current_hash[7],
-		current_hash[8],current_hash[9],current_hash[10],current_hash[11],current_hash[12],current_hash[13],current_hash[14],current_hash[15]);
+	delete [] word; 
 }
 
 
 
-void run_mult(char *words, const int height, const int width)
+void run_mult(char *words, const int height, const int width, uint8_t *hashed_words)
 {
 
 	cudaError_t cerr;
@@ -206,23 +211,29 @@ void run_mult(char *words, const int height, const int width)
 	if ( cerr != cudaSuccess )
 		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
+	uint8_t *cHashWords;
+        cerr = cudaMalloc( &cHashWords, height * COUNT_UNIT8_T_HASH * sizeof( uint8_t ));
+        if ( cerr != cudaSuccess )
+                printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+
+
 	// Copy data from PC to GPU device
 	cerr = cudaMemcpy( cWords, words, length * sizeof( char ), cudaMemcpyHostToDevice );
 	if ( cerr != cudaSuccess )
 		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Grid creation
-	kernel_mult<<< blocks, threads >>>( cWords, height, width );
+	kernel_mult<<< blocks, threads >>>( cWords, height, width, cHashWords);
 
 	if ( ( cerr = cudaGetLastError() ) != cudaSuccess )
 		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Copy data from GPU device to PC
-//	cerr = cudaMemcpy( P, cudaP, Length * sizeof( float ), cudaMemcpyDeviceToHost );
-//	if ( cerr != cudaSuccess )
-//		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
+	cerr = cudaMemcpy( hashed_words, cHashWords, height * COUNT_UNIT8_T_HASH * sizeof( uint8_t ), cudaMemcpyDeviceToHost );
+	if ( cerr != cudaSuccess )
+		printf( "CUDA Error [%d] - '%s'\n", __LINE__, cudaGetErrorString( cerr ) );
 
 	// Free memory
 	cudaFree( cWords );
-
+	cudaFree( cHashWords );
 }
