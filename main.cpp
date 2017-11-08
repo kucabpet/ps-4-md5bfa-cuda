@@ -8,10 +8,10 @@
 #define COUNT_UNIT8_T_HASH 16
 #define ALPHABET_COUNT 26
 
-#define DEBUG
+//#define DEBUG
 #define DEBUG_SHOW_GENERATING_WORD false
-#define DEBUG_SHOW_WORDS_ARRAY true
-#define DEBUG_SHOW_WORDS_HASHES_ARRAY true
+#define DEBUG_SHOW_WORDS_ARRAY false
+#define DEBUG_SHOW_WORDS_HASHES_ARRAY false
 
 // Declaration
 void run_mult(char *words, int height, int width, uint8_t *hashed_words);
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     int len = atoi(argv[2]);
 
     printf("Input hash: %s \n", input_data);
-    printf("Count of character: %d \n", argv[2]);
+    printf("Count of character: %d \n", len);
 
     uint8_t input_data_hexa[16];
     parse_input_data(input_data, input_data_hexa);
