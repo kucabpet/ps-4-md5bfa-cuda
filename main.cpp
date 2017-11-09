@@ -11,7 +11,7 @@
 //#define DEBUG
 #define DEBUG_SHOW_GENERATING_WORD false
 #define DEBUG_SHOW_WORDS_ARRAY false
-#define DEBUG_SHOW_WORDS_HASHES_ARRAY false
+#define DEBUG_SHOW_WORDS_HASHES_ARRAY true
 
 // Declaration
 void run_mult(char *words, int height, int width, uint8_t *hashed_words);
@@ -61,7 +61,7 @@ void parse_input_data(char *input, uint8_t *output) {
 
 void generate_words(char *prefix, int level, const int max_depth, const char *alphabet,
                     char *words, int *curr_index, const int height, const int width) {
-    char curr_word[width];
+    char curr_word[width+1];
 
     level += 1;
 
@@ -69,6 +69,7 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
         strcpy(curr_word, "");
         strcpy(curr_word, prefix);
         strncat(curr_word, &alphabet[i], 1);
+	
 
         if (DEBUG_SHOW_GENERATING_WORD) {
             printf("Generating... %s... \n", curr_word);
@@ -78,11 +79,9 @@ void generate_words(char *prefix, int level, const int max_depth, const char *al
             words[width * (*curr_index) + j] = curr_word[j];
         }
 
-
         if (*curr_index < height * width) {
             (*curr_index)++;
         }
-
 
         if (level < max_depth) {
             generate_words(curr_word, level, max_depth, alphabet, words, curr_index, height, width);
@@ -118,7 +117,11 @@ int main(int argc, char **argv) {
 
     int height;
     if (len > 1) {
-        height = (int) pow(ALPHABET_COUNT, len) + ALPHABET_COUNT;
+        height = 0;
+
+	for(int i=1;i<=len;i++){	
+           height += (int) pow(ALPHABET_COUNT, i);
+	}
     } else {
         height = ALPHABET_COUNT;
     }
@@ -127,6 +130,7 @@ int main(int argc, char **argv) {
 #ifdef DEBUG
     printf("debug: height=%d \n", height);
     printf("debug: width=%d \n", width);
+
 #endif
 
     char *words = new char[width * height];
